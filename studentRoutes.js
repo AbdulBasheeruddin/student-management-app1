@@ -1,35 +1,96 @@
 const express = require('express');
 const router = express.Router();
 
-// In-memory student data
+// 1. Initial In-memory Student Data
 let students = [
-  { id: 1, name: "Abdul", dept: "CSE", age: 20 },
-  { id: 3, name: "Hari", dept: "CSE", age: 21 }
+    { id: 1, name: "Manoj", dept: "CSE", age: 19 },
+    { id: 2, name: "Abdul", dept: "CSE", age: 20 }
 ];
 
-// GET - Get all students
+// 2. READ - Get all students
 router.get('/', (req, res) => {
-  res.json(students);
+    res.json(students);
 });
 
+// 3. CREATE - Single or Multiple students (POST)
+router.post('/', (req, res) => {
+    const newEntry = req.body;
 
-// 👉 PASTE THE PUT ROUTE RIGHT HERE 👇
-router.put('/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const { dept, age } = req.body;
+    if (Array.isArray(newEntry)) {
+        // Logic for Multiple Entries
+        students.push(...newEntry);
+    } else {
+        // Logic for Single Entry
+        students.push(newEntry);
+    }
 
-  const student = students.find(s => s.id === id);
-
-  if (!student) {
-    return res.status(404).send("Student not found");
-  }
-
-  if (dept) student.dept = dept;
-  if (age) student.age = age;
-
-  res.send("Department and age updated successfully");
+    res.status(201).json({
+        message: 'Students added successfully',
+        students
+    });
 });
 
+// 4. UPDATE - Single or Multiple students (PUT)
+router.put('/', (req, res) => {
+    const updates = req.body;
 
-// ❗ DO NOT paste below this line
+    if (Array.isArray(updates)) {
+        // Logic for Multiple Updates
+        updates.forEach(update => {
+            students = students.map(student =>
+                student.id === update.id
+                    ? { 
+                        ...student, 
+                        name: update.name || student.name, 
+                        dept: update.dept || student.dept, 
+                        age: update.age || student.age 
+                      }
+                    : student
+            );
+        });
+    } else {
+        // Logic for Single Update
+        students = students.map(student =>
+            student.id === updates.id
+                ? { 
+                    ...student, 
+                    name: updates.name || student.name, 
+                    dept: updates.dept || student.dept, 
+                    age: updates.age || student.age 
+                  }
+                : student
+        );
+    }
+
+    res.json({
+        message: "Students updated successfully",
+        students
+    });
+});
+
+// 5. DELETE - Delete multiple students by ID (DELETE)
+router.delete('/', (req, res) => {
+    const idsToDelete = req.body; // Expects an array of IDs, e.g., [1, 2]
+
+    if (Array.isArray(idsToDelete)) {
+        students = students.filter(student => !idsToDelete.includes(student.id));
+    }
+
+    res.json({
+        message: "Students deleted successfully",
+        students
+    });
+});
+
+// DELETE - Delete a single student via URL path
+router.delete('/:id', (req, res) => {
+    const id = parseInt(req.params.id); // Get ID from URL
+    students = students.filter(student => student.id !== id);
+    
+    res.json({
+        message: Student with ID ${id} deleted successfully,
+        students
+    });
+});
+
 module.exports = router;
